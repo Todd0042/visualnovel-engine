@@ -98,25 +98,28 @@ object GameContent {
     @Volatile
     private var packState: GameContentPack = emergencyFallbackPack()
 
+    @Volatile
+    private var convertedScenes: Map<String, StoryScene> = emptyMap()
+
+    @Volatile
+    private var convertedNodes: Map<String, DialogueNode> = emptyMap()
+
+    @Volatile
+    private var convertedSpeakers: Map<String, DialogueSpeaker> = emptyMap()
+
+    init {
+        rebuildConvertedCache()
+    }
+
     val pack: GameContentPack get() = packState
     val manifest: GameManifest get() = packState.manifest
     val characters: Map<String, CharacterDto> get() = packState.characters
 
-    private val convertedScenes by lazy(LazyThreadSafetyMode.PUBLICATION) {
-        packState.scenes.mapValues { (_, dto) -> toStoryScene(dto) }
-    }
     val scenes: Map<String, StoryScene> get() = convertedScenes
-
-    private val convertedNodes by lazy(LazyThreadSafetyMode.PUBLICATION) {
-        val speakerMap = packState.characters.mapValues { (_, dto) -> toDialogueSpeaker(dto) }
-        packState.nodes.mapValues { (_, dto) ->
-            toDialogueNode(dto, speakerMap)
-        }
-    }
     val nodes: Map<String, DialogueNode> get() = convertedNodes
 
     val allSpeakers: List<DialogueSpeaker>
-        get() = packState.characters.values.map { toDialogueSpeaker(it) }
+        get() = convertedSpeakers.values.toList()
 
     val narrator: DialogueSpeaker
         get() = speakerById("narrator") ?: DialogueSpeaker.NARRATOR
@@ -127,10 +130,7 @@ object GameContent {
     val initialNode: DialogueNode
         get() = nodes[manifest.initialNodeId] ?: nodes.values.firstOrNull() ?: emergencyFallbackNode()
 
-    fun speakerById(id: String): DialogueSpeaker? {
-        val dto = packState.characters[id] ?: return null
-        return toDialogueSpeaker(dto)
-    }
+    fun speakerById(id: String): DialogueSpeaker? = convertedSpeakers[id]
 
     fun characterById(id: String): CharacterDto? = packState.characters[id]
 
@@ -138,10 +138,21 @@ object GameContent {
 
     fun nodeById(id: String): DialogueNode? = nodes[id]
 
+    private fun rebuildConvertedCache() {
+        val current = packState
+        val speakerMap = current.characters.mapValues { (_, dto) -> toDialogueSpeaker(dto) }
+        convertedSpeakers = speakerMap
+        convertedScenes = current.scenes.mapValues { (_, dto) -> toStoryScene(dto) }
+        convertedNodes = current.nodes.mapValues { (_, dto) ->
+            toDialogueNode(dto, speakerMap)
+        }
+    }
+
     fun initialize(context: Context) {
         try {
             val loaded = GameContentLoader.loadFromAssets(context.assets, "game")
             packState = loaded
+            rebuildConvertedCache()
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -150,6 +161,7 @@ object GameContent {
     fun initializeFromDirectory(gameDir: File) {
         try {
             packState = GameContentLoader.loadFromDirectory(gameDir)
+            rebuildConvertedCache()
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -157,6 +169,7 @@ object GameContent {
 
     fun reset() {
         packState = emergencyFallbackPack()
+        rebuildConvertedCache()
     }
 
     private fun toStoryScene(dto: StorySceneDto): StoryScene {

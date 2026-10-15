@@ -95,9 +95,10 @@ object StoryAssetLoader {
         context.assets.open(assetPath).use { stream ->
             BitmapFactory.decodeStream(stream, null, boundsOptions)
         }
+        val isPng = assetPath.endsWith(".png", ignoreCase = true)
         val decodeOptions = BitmapFactory.Options().apply {
             inSampleSize = calculateInSampleSize(boundsOptions, MAX_TEXTURE_DIMENSION, MAX_TEXTURE_DIMENSION)
-            inPreferredConfig = Bitmap.Config.RGB_565
+            inPreferredConfig = if (isPng) Bitmap.Config.ARGB_8888 else Bitmap.Config.RGB_565
         }
         context.assets.open(assetPath).use { stream ->
             BitmapFactory.decodeStream(stream, null, decodeOptions)?.asImageBitmap()

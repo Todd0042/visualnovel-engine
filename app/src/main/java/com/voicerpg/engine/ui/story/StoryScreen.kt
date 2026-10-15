@@ -16,20 +16,26 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.FastForward
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
@@ -215,33 +221,46 @@ fun StoryScreen(
             }
         }
 
-        // 4. Top Header Bar (Chapter & Scene Info + Quick Buttons)
+        // 4. Top Header Action Bar (Quick Actions in Top Right)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .windowInsetsPadding(
+                    WindowInsets.safeDrawing.only(
+                        WindowInsetsSides.Horizontal + WindowInsetsSides.Top
+                    )
+                )
+                .padding(horizontal = 16.dp, vertical = 8.dp)
                 .align(Alignment.TopCenter),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = Arrangement.End,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Chapter and Scene indicator
-            Surface(
-                color = RetroBlack.copy(alpha = 0.80f),
-                shape = RoundedCornerShape(8.dp),
-                border = androidx.compose.foundation.BorderStroke(1.dp, RetroBorderGold.copy(alpha = 0.6f))
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "${currentScene.chapterTitle} • ${currentScene.name}",
-                    color = LogosGold,
-                    fontSize = 13.sp,
-                    fontFamily = FontFamily.Monospace,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                )
-            }
+                // Dialogue Log button
+                Button(
+                    onClick = { storyViewModel.openBacklog() },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = RetroBlack.copy(alpha = 0.85f),
+                        contentColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(18.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, RetroBorder),
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+                    modifier = Modifier.height(36.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.History,
+                        contentDescription = "Dialogue Log",
+                        tint = Color.White,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Text("Log", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                }
 
-            // Quick actions
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 // Chapters
                 IconButton(
                     onClick = { storyViewModel.openChapterSelect() },
@@ -288,6 +307,9 @@ fun StoryScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .windowInsetsPadding(
+                        WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)
+                    )
                     .padding(horizontal = if (isLandscape) 32.dp else 12.dp)
                     .background(
                         color = RetroPanel.copy(alpha = 0.95f),
@@ -300,51 +322,83 @@ fun StoryScreen(
                     )
                     .padding(horizontal = 20.dp, vertical = 16.dp)
             ) {
-                Column {
-                    // Speaker Nameplate
-                    val speakerName = if (speaker.isNarrator) "NARRATOR" else speaker.name.uppercase()
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Surface(
-                            color = speaker.themeColor.copy(alpha = 0.15f),
-                            shape = RoundedCornerShape(6.dp),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, speaker.themeColor.copy(alpha = 0.5f))
-                        ) {
-                            Text(
-                                text = speakerName,
-                                color = speaker.themeColor,
-                                fontSize = 14.sp,
-                                fontFamily = FontFamily.Monospace,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
-                            )
-                        }
+                val portraitAsset = speaker.portraitAsset
+                val portraitBitmap = remember(portraitAsset) {
+                    if (!portraitAsset.isNullOrBlank()) {
+                        StoryAssetLoader.loadBitmap(context, portraitAsset)
+                    } else null
+                }
 
-                        if (!speaker.title.isNullOrBlank()) {
-                            Text(
-                                text = speaker.title,
-                                color = Color.LightGray,
-                                fontSize = 12.sp,
-                                fontFamily = FontFamily.Serif
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(14.dp),
+                    verticalAlignment = Alignment.Top
+                ) {
+                    // Character Portrait Badge in Dialogue Card
+                    if (!speaker.isNarrator && portraitBitmap != null) {
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            border = androidx.compose.foundation.BorderStroke(1.5.dp, speaker.themeColor),
+                            color = Color.Black.copy(alpha = 0.6f),
+                            modifier = Modifier
+                                .size(if (isLandscape) 64.dp else 52.dp)
+                                .shadow(8.dp, RoundedCornerShape(8.dp))
+                        ) {
+                            Image(
+                                bitmap = portraitBitmap,
+                                contentDescription = speaker.name,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.fillMaxSize()
                             )
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(10.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        // Speaker Nameplate
+                        val speakerName = if (speaker.isNarrator) "NARRATOR" else speaker.name.uppercase()
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Surface(
+                                color = speaker.themeColor.copy(alpha = 0.15f),
+                                shape = RoundedCornerShape(6.dp),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, speaker.themeColor.copy(alpha = 0.5f))
+                            ) {
+                                Text(
+                                    text = speakerName,
+                                    color = speaker.themeColor,
+                                    fontSize = 14.sp,
+                                    fontFamily = FontFamily.Monospace,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                                )
+                            }
 
-                    // Dialogue Text
-                    Text(
-                        text = currentNode.text,
-                        color = Color.White,
-                        fontSize = if (isLandscape) 17.sp else 16.sp,
-                        lineHeight = 24.sp,
-                        fontFamily = FontFamily.Serif,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(min = 60.dp)
-                    )
+                            if (!speaker.title.isNullOrBlank()) {
+                                Text(
+                                    text = speaker.title,
+                                    color = Color.LightGray,
+                                    fontSize = 12.sp,
+                                    fontFamily = FontFamily.Serif
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        // Dialogue Text
+                        Text(
+                            text = currentNode.text,
+                            color = Color.White,
+                            fontSize = if (isLandscape) 17.sp else 16.sp,
+                            lineHeight = 24.sp,
+                            fontFamily = FontFamily.Serif,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(min = 60.dp)
+                        )
+                    }
                 }
             }
 
@@ -357,6 +411,11 @@ fun StoryScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .windowInsetsPadding(
+                            WindowInsets.safeDrawing.only(
+                                WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom
+                            )
+                        )
                         .padding(horizontal = 16.dp, vertical = 8.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
@@ -425,19 +484,6 @@ fun StoryScreen(
                             Spacer(Modifier.width(4.dp))
                             Text("Auto", fontSize = 12.sp)
                         }
-                    }
-
-                    // Right button: Backlog Transcript
-                    Button(
-                        onClick = { storyViewModel.openBacklog() },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF1E293B),
-                            contentColor = Color.White
-                        ),
-                        shape = RoundedCornerShape(6.dp),
-                        modifier = Modifier.height(38.dp)
-                    ) {
-                        Text("Log", fontSize = 12.sp)
                     }
                 }
             }

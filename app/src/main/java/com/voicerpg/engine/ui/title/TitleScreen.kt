@@ -8,11 +8,15 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -31,6 +35,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
 import com.voicerpg.engine.content.GameManifest
 import com.voicerpg.engine.model.SaveSlotInfo
 import com.voicerpg.engine.model.SaveSummary
@@ -47,12 +54,14 @@ fun TitleScreen(
     saveSummary: SaveSummary?,
     saveSlots: List<SaveSlotInfo> = emptyList(),
     currentSlot: Int = 1,
-    onStartStory: () -> Unit,
-    onContinueStory: () -> Unit,
-    onAutoPlay: () -> Unit,
+    onPlay: () -> Unit,
+    onStartNewStory: () -> Unit = onPlay,
     onSelectChapter: () -> Unit,
     onOptions: () -> Unit,
     onSelectSlot: (Int) -> Unit = {},
+    onStartStory: (() -> Unit)? = null,
+    onContinueStory: (() -> Unit)? = null,
+    onAutoPlay: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -95,7 +104,8 @@ fun TitleScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 24.dp, vertical = 36.dp),
+                .windowInsetsPadding(WindowInsets.safeDrawing)
+                .padding(horizontal = 24.dp, vertical = 20.dp),
             verticalArrangement = Arrangement.SpaceBetween,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -134,17 +144,17 @@ fun TitleScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Save info badge if existing save
+                // Save info badge if existing save on current slot
                 if (hasSave && saveSummary != null) {
                     Surface(
                         color = RetroBlack.copy(alpha = 0.85f),
                         shape = RoundedCornerShape(8.dp),
                         border = androidx.compose.foundation.BorderStroke(1.dp, RetroBorderGold.copy(alpha = 0.5f)),
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 6.dp)
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp)
                     ) {
                         Column(modifier = Modifier.padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(
-                                text = "CURRENT PROGRESS",
+                                text = "SLOT $currentSlot PROGRESS",
                                 color = LogosGold,
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
@@ -159,54 +169,41 @@ fun TitleScreen(
                             )
                         }
                     }
-
-                    // Continue button
-                    Button(
-                        onClick = onContinueStory,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = LogosGold,
-                            contentColor = Color.Black
-                        ),
-                        shape = RoundedCornerShape(10.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(50.dp)
-                    ) {
-                        Text("CONTINUE STORY", fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                    }
                 }
 
-                // Start / Restart button
+                // 1. PLAY BUTTON (Top option, default auto-play story)
                 Button(
-                    onClick = onStartStory,
+                    onClick = onPlay,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (hasSave) Color(0xFF1E293B) else LogosGold,
-                        contentColor = if (hasSave) Color.White else Color.Black
+                        containerColor = LogosGold,
+                        contentColor = Color.Black
                     ),
                     shape = RoundedCornerShape(10.dp),
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp)
                 ) {
-                    Text(if (hasSave) "START NEW STORY" else "BEGIN STORY", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    Text("PLAY", fontSize = 17.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
                 }
 
-                // Auto Play button
-                Button(
-                    onClick = onAutoPlay,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF1E293B),
-                        contentColor = Color.White
-                    ),
-                    shape = RoundedCornerShape(10.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(46.dp)
-                ) {
-                    Text("AUTO-PLAY STORY", fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                // 2. START NEW STORY (Available when current slot has saved progress)
+                if (hasSave) {
+                    Button(
+                        onClick = onStartNewStory,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF1E293B),
+                            contentColor = Color.White
+                        ),
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(46.dp)
+                    ) {
+                        Text("START NEW STORY", fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                    }
                 }
 
-                // Chapter Select button
+                // 3. Chapter Select button
                 Button(
                     onClick = onSelectChapter,
                     colors = ButtonDefaults.buttonColors(
@@ -221,7 +218,7 @@ fun TitleScreen(
                     Text("CHAPTER SELECT", fontSize = 14.sp)
                 }
 
-                // Settings button
+                // 4. Settings button
                 Button(
                     onClick = onOptions,
                     colors = ButtonDefaults.buttonColors(
@@ -236,34 +233,55 @@ fun TitleScreen(
                     Text("SETTINGS", fontSize = 14.sp)
                 }
 
-                // Save slot selector pills
-                Spacer(modifier = Modifier.height(4.dp))
+                // 5. Selectable Save Slot Pills
+                Spacer(modifier = Modifier.height(6.dp))
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     (1..3).forEach { slot ->
                         val isSelected = slot == currentSlot
+                        val slotInfo = saveSlots.find { it.slotIndex == slot }
+                        val hasSlotSave = slotInfo != null && !slotInfo.isEmpty
+
                         Box(
                             modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable { onSelectSlot(slot) }
                                 .border(
-                                    1.dp,
-                                    if (isSelected) LogosGold else RetroBorder,
-                                    RoundedCornerShape(6.dp)
+                                    width = if (isSelected) 1.5.dp else 1.dp,
+                                    color = if (isSelected) LogosGold else RetroBorder,
+                                    shape = RoundedCornerShape(8.dp)
                                 )
                                 .background(
-                                    if (isSelected) LogosGold.copy(alpha = 0.2f) else RetroBlack,
-                                    RoundedCornerShape(6.dp)
+                                    if (isSelected) LogosGold.copy(alpha = 0.25f) else RetroBlack.copy(alpha = 0.7f),
+                                    RoundedCornerShape(8.dp)
                                 )
-                                .padding(horizontal = 12.dp, vertical = 6.dp),
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(
-                                text = "Slot $slot",
-                                color = if (isSelected) LogosGold else Color.Gray,
-                                fontSize = 12.sp,
-                                fontFamily = FontFamily.Monospace
-                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Text(
+                                    text = "Slot $slot",
+                                    color = if (isSelected) LogosGold else Color.LightGray,
+                                    fontSize = 13.sp,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                    fontFamily = FontFamily.Monospace
+                                )
+                                if (hasSlotSave) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(6.dp)
+                                            .background(
+                                                if (isSelected) LogosGold else Color.Gray,
+                                                CircleShape
+                                            )
+                                    )
+                                }
+                            }
                         }
                     }
                 }

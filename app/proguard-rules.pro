@@ -47,3 +47,6 @@
 -keepclassmembers class * {
     @kotlin.jvm.JvmField *;
 }
+
+# 8. Visual Novel Content Pack Data Transfer Objects
+-keep class com.voicerpg.engine.content.** { *; }

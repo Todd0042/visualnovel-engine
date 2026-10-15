@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.DisposableEffect
@@ -34,6 +35,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var storyViewModel: StoryViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
         // Initialize drop-in visual novel game content pack
@@ -99,9 +101,16 @@ class MainActivity : ComponentActivity() {
                                 saveSummary = storyState.saveSummary,
                                 saveSlots = storyState.saveSlots,
                                 currentSlot = storyState.currentSlot,
-                                onStartStory = { storyViewModel.startNewStory(storyState.currentSlot) },
-                                onContinueStory = { storyViewModel.continueStory(storyState.currentSlot) },
-                                onAutoPlay = { storyViewModel.startNewStory(storyState.currentSlot, startInAutoPlay = true) },
+                                onPlay = {
+                                    if (storyState.hasExistingSave) {
+                                        storyViewModel.continueStory(storyState.currentSlot, startInAutoPlay = true)
+                                    } else {
+                                        storyViewModel.startNewStory(storyState.currentSlot, startInAutoPlay = true)
+                                    }
+                                },
+                                onStartNewStory = {
+                                    storyViewModel.startNewStory(storyState.currentSlot, startInAutoPlay = true)
+                                },
                                 onSelectChapter = { storyViewModel.openChapterSelect() },
                                 onOptions = { storyViewModel.openOptions() },
                                 onSelectSlot = { slot -> storyViewModel.selectSlot(slot) }
