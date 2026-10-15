@@ -19,7 +19,7 @@ import java.util.concurrent.atomic.AtomicLong
  * Text-to-Speech Engine for the Visual Novel.
  * Powers character voices and narration using Android's on-device TextToSpeech engine.
  */
-class CombatNarrator(
+class StoryNarrator(
     private val context: Context? = null
 ) : TextToSpeech.OnInitListener {
 

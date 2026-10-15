@@ -63,8 +63,5 @@ class MusicManagerTest {
 
         musicManager.playTrack(MusicManager.TRACK_TITLE)
         assertEquals(MusicManager.TRACK_TITLE, musicManager.currentTrack.value)
-
-        musicManager.playCombatMusic()
-        assertEquals(MusicManager.TRACK_COMBAT, musicManager.currentTrack.value)
     }
 }

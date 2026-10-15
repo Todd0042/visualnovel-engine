@@ -50,12 +50,7 @@ data class StorySceneDto(
     val actTitle: String = "Act I"
 )
 
-data class DialogueNodeChoiceDto(
-    val id: String = "",
-    val text: String = "",
-    @SerializedName(value = "nextNodeId", alternate = ["next_node_id"])
-    val nextNodeId: String = ""
-)
+
 
 data class DialogueNodeDto(
     val id: String = "",
@@ -73,8 +68,7 @@ data class DialogueNodeDto(
     @SerializedName(value = "musicAsset", alternate = ["music_asset"])
     val musicAsset: String? = null,
     @SerializedName(value = "sfxAsset", alternate = ["sfx_asset"])
-    val sfxAsset: String? = null,
-    val choices: List<DialogueNodeChoiceDto>? = null
+    val sfxAsset: String? = null
 )
 
 data class GameManifest(
@@ -207,14 +201,12 @@ object GameContent {
             "CENTER_NARRATOR" -> SpeakerSide.CENTER_NARRATOR
             else -> SpeakerSide.LEFT
         }
-        // In a linear visual novel, advance to nextNodeId or first choice's nextNodeId
-        val effectiveNext = dto.nextNodeId ?: dto.choices?.firstOrNull()?.nextNodeId
         return DialogueNode(
             id = dto.id,
             speaker = speaker,
             side = side,
             text = dto.text,
-            nextNodeId = effectiveNext,
+            nextNodeId = dto.nextNodeId,
             changeSceneId = dto.changeSceneId,
             backgroundAsset = dto.backgroundAsset,
             musicAsset = dto.musicAsset,

@@ -86,7 +86,7 @@ fun StoryScreen(
     modifier: Modifier = Modifier
 ) {
     val storyState by storyViewModel.state.collectAsState()
-    val isSpeaking by storyViewModel.combatNarrator.isSpeaking.collectAsState()
+    val isSpeaking by storyViewModel.storyNarrator.isSpeaking.collectAsState()
 
     val context = LocalContext.current
     val configuration = LocalConfiguration.current

@@ -20,7 +20,7 @@ class TtsNormalizationTest {
         GameContent.reset()
         GameContent.initializeFromDirectory(assetsDir!!)
 
-        val narrator = CombatNarrator()
+        val narrator = StoryNarrator()
 
         val input1 = "Welcome to St. Augustine, Florida."
         val output1 = narrator.normalizeTtsText(input1)

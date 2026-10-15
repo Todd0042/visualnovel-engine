@@ -12,7 +12,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.lifecycleScope
-import com.voicerpg.engine.audio.CombatNarrator
+import com.voicerpg.engine.audio.StoryNarrator
 import com.voicerpg.engine.audio.MusicManager
 import com.voicerpg.engine.content.GameContent
 import com.voicerpg.engine.engine.SaveManager
@@ -28,7 +28,7 @@ import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
 
-    private lateinit var combatNarrator: CombatNarrator
+    private lateinit var storyNarrator: StoryNarrator
     private lateinit var musicManager: MusicManager
     private lateinit var saveManager: SaveManager
     private lateinit var storyViewModel: StoryViewModel
@@ -39,20 +39,20 @@ class MainActivity : ComponentActivity() {
         // Initialize drop-in visual novel game content pack
         GameContent.initialize(applicationContext)
 
-        combatNarrator = CombatNarrator(this)
-        combatNarrator.registerSpeakers(GameContent.allSpeakers)
+        storyNarrator = StoryNarrator(this)
+        storyNarrator.registerSpeakers(GameContent.allSpeakers)
         musicManager = MusicManager(this)
         saveManager = SaveManager(this)
 
         storyViewModel = StoryViewModel(
-            combatNarrator = combatNarrator,
+            storyNarrator = storyNarrator,
             saveManager = saveManager,
             musicManager = musicManager
         )
 
         // Automatic speech ducking: BGM ducks during voice narration
         lifecycleScope.launch {
-            combatNarrator.isSpeaking.collect { speaking ->
+            storyNarrator.isSpeaking.collect { speaking ->
                 if (speaking) {
                     musicManager.duckForSpeech()
                 } else {
@@ -63,8 +63,8 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val storyState by storyViewModel.state.collectAsState()
-            val isNarrationEnabled by combatNarrator.isNarrationEnabled.collectAsState()
-            val speechRate by combatNarrator.speechRate.collectAsState()
+            val isNarrationEnabled by storyNarrator.isNarrationEnabled.collectAsState()
+            val speechRate by storyNarrator.speechRate.collectAsState()
             val isMusicEnabled by musicManager.isMusicEnabled.collectAsState()
             val musicVolume by musicManager.musicVolume.collectAsState()
 
@@ -125,14 +125,14 @@ class MainActivity : ComponentActivity() {
                         isMusicEnabled = isMusicEnabled,
                         musicVolume = musicVolume,
                         onToggleNarration = {
-                            combatNarrator.toggleNarration()
+                            storyNarrator.toggleNarration()
                             storyViewModel.persistCurrentState()
                         },
                         onToggleAutoPlay = {
                             storyViewModel.toggleAutoPlay()
                         },
                         onSpeechRateChange = { rate ->
-                            combatNarrator.setSpeechRate(rate)
+                            storyNarrator.setSpeechRate(rate)
                             storyViewModel.persistCurrentState()
                         },
                         onToggleMusic = {
@@ -144,7 +144,7 @@ class MainActivity : ComponentActivity() {
                             storyViewModel.persistCurrentState()
                         },
                         onOpenVoiceSettings = {
-                            combatNarrator.openVoiceSettings(this@MainActivity)
+                            storyNarrator.openVoiceSettings(this@MainActivity)
                         },
                         onReturnToTitle = {
                             storyViewModel.closeOptions()
@@ -177,7 +177,7 @@ class MainActivity : ComponentActivity() {
     override fun onDestroy() {
         super.onDestroy()
         storyViewModel.persistCurrentState()
-        combatNarrator.destroy()
+        storyNarrator.destroy()
         musicManager.destroy()
     }
 }

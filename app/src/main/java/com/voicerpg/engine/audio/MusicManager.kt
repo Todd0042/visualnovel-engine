@@ -38,7 +38,6 @@ class MusicManager(
         private const val TAG = "MusicManager"
         const val TRACK_TITLE = "audio/music/bgm_title.ogg"
         const val TRACK_EXPLORATION = "audio/music/bgm_exploration.ogg"
-        const val TRACK_COMBAT = "audio/music/bgm_combat.ogg"
 
         const val DUCK_RATIO = 0.22f
     }
@@ -124,10 +123,6 @@ class MusicManager(
         }
 
         startTrackPlayback(assetPath)
-    }
-
-    fun playCombatMusic() {
-        playTrack(TRACK_COMBAT)
     }
 
     private fun startTrackPlayback(assetPath: String) {

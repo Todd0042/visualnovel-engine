@@ -2,7 +2,7 @@ package com.voicerpg.engine.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.voicerpg.engine.audio.CombatNarrator
+import com.voicerpg.engine.audio.StoryNarrator
 import com.voicerpg.engine.audio.MusicManager
 import com.voicerpg.engine.content.GameContent
 import com.voicerpg.engine.engine.SaveManager
@@ -39,7 +39,7 @@ data class StoryState(
 )
 
 class StoryViewModel(
-    val combatNarrator: CombatNarrator,
+    val storyNarrator: StoryNarrator,
     val saveManager: SaveManager = SaveManager(),
     val musicManager: MusicManager? = null,
     private val scopeOverride: CoroutineScope? = null
@@ -147,19 +147,19 @@ class StoryViewModel(
         _state.value = _state.value.copy(isPlaying = nextPlaying, isAutoPlay = nextPlaying)
         if (nextPlaying) {
             // If narrator is currently not speaking, advance to start playback
-            if (!combatNarrator.isSpeaking.value) {
+            if (!storyNarrator.isSpeaking.value) {
                 advanceDialogue()
             }
         } else {
             cancelAutoAdvance()
-            combatNarrator.stop()
+            storyNarrator.stop()
         }
     }
 
     fun toggleAutoPlay() {
         val next = !_state.value.isAutoPlay
         _state.value = _state.value.copy(isAutoPlay = next, isPlaying = next)
-        if (next && !combatNarrator.isSpeaking.value) {
+        if (next && !storyNarrator.isSpeaking.value) {
             advanceDialogue()
         } else if (!next) {
             cancelAutoAdvance()
@@ -168,7 +168,7 @@ class StoryViewModel(
 
     fun advanceDialogue() {
         cancelAutoAdvance()
-        combatNarrator.stop()
+        storyNarrator.stop()
 
         val currentNode = _state.value.currentNode
         val nextNodeId = currentNode.nextNodeId
@@ -205,7 +205,7 @@ class StoryViewModel(
 
     fun previousDialogue() {
         cancelAutoAdvance()
-        combatNarrator.stop()
+        storyNarrator.stop()
 
         if (nodeHistory.isEmpty()) return
         val (prevSceneId, prevNodeId) = nodeHistory.removeAt(nodeHistory.lastIndex)
@@ -217,7 +217,7 @@ class StoryViewModel(
 
     fun jumpToChapter(sceneId: String, introNodeId: String) {
         cancelAutoAdvance()
-        combatNarrator.stop()
+        storyNarrator.stop()
 
         val scene = GameContent.scenes[sceneId] ?: _state.value.currentScene
         val node = GameContent.nodes[introNodeId] ?: GameContent.initialNode
@@ -270,7 +270,7 @@ class StoryViewModel(
         persistCurrentState()
 
         // Narrate line via TTS
-        combatNarrator.narrateDialogue(node.speaker, node.text) {
+        storyNarrator.narrateDialogue(node.speaker, node.text) {
             onLineNarrated(node)
         }
     }
@@ -303,7 +303,7 @@ class StoryViewModel(
 
     fun closeOptions() {
         _state.value = _state.value.copy(isOptionsOpen = false)
-        if (_state.value.isAutoPlay && _state.value.isPlaying && !combatNarrator.isSpeaking.value) {
+        if (_state.value.isAutoPlay && _state.value.isPlaying && !storyNarrator.isSpeaking.value) {
             scheduleAutoAdvance(delayMs = 800L)
         }
     }
@@ -315,7 +315,7 @@ class StoryViewModel(
 
     fun closeBacklog() {
         _state.value = _state.value.copy(isBacklogOpen = false)
-        if (_state.value.isAutoPlay && _state.value.isPlaying && !combatNarrator.isSpeaking.value) {
+        if (_state.value.isAutoPlay && _state.value.isPlaying && !storyNarrator.isSpeaking.value) {
             scheduleAutoAdvance(delayMs = 800L)
         }
     }
@@ -330,7 +330,7 @@ class StoryViewModel(
 
     fun returnToTitle() {
         cancelAutoAdvance()
-        combatNarrator.stop()
+        storyNarrator.stop()
         persistCurrentState()
         refreshSaveStatus()
         _state.value = _state.value.copy(
@@ -350,8 +350,8 @@ class StoryViewModel(
             currentNodeId = s.currentNode.id,
             recentDialogueLog = s.dialogueHistory,
             isAutoPlay = s.isAutoPlay,
-            isNarrationEnabled = combatNarrator.isNarrationEnabled.value,
-            speechRate = combatNarrator.speechRate.value,
+            isNarrationEnabled = storyNarrator.isNarrationEnabled.value,
+            speechRate = storyNarrator.speechRate.value,
             musicVolume = musicManager?.musicVolume?.value ?: 0.55f
         )
         saveManager.save(save, s.currentSlot)
@@ -360,6 +360,6 @@ class StoryViewModel(
     override fun onCleared() {
         super.onCleared()
         cancelAutoAdvance()
-        combatNarrator.stop()
+        storyNarrator.stop()
     }
 }
