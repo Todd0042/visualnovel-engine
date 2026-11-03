@@ -1,3 +1,11 @@
+<p align="center">
+  <a href="https://ko-fi.com/todd0042">
+    <img src="https://raw.githubusercontent.com/Todd0042/creator-assets/main/banners/todd_creator_banner_v1.0.png" alt="Support Todd on Ko-fi" width="100%" />
+  </a>
+</p>
+
+---
+
 # VoiceRPG Engine: Native Android Voice-Controlled JRPG Framework
 
 A high-performance, native Android game engine designed for building audio-first, voice-commanded retro JRPGs. Every aspect of gameplay—incantations, tactical party combat, visual novel exploration, dialogue choices, and system toggles—can be operated hands-free via natural voice or via classic retro touch controls.
@@ -86,3 +94,12 @@ com.voicerpg.engine/
 4. **Follow [STARTER_GUIDE.md](STARTER_GUIDE.md)** to swap in your own world: game content is drop-in **JSON + assets** under `app/src/main/assets/game/` (story graph, characters, spells, enemies, encounters, voices, art, music) — no engine code changes required.
 
 > ⚠️ **Uniqueness rule (AGENTS.md §8):** every game built with this engine must be **its own unique app** — a unique `applicationId`, app name, icon, and game content. Never ship an app that keeps the reference `applicationId` or another game's identity; on Android, two APKs with the same `applicationId` overwrite each other on a device (which is why the reference app previously replaced *Commander America* when both used `com.voicerpg.engine`).
+
+---
+
+<p align="center">
+  <a href="https://ko-fi.com/todd0042">
+    <img src="https://raw.githubusercontent.com/Todd0042/creator-assets/main/banners/todd_creator_banner_v2.0.png" alt="Support Todd on Ko-fi" width="100%" />
+  </a>
+</p>
+
