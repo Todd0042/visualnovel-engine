@@ -18,17 +18,17 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 /**
- * Background Music (BGM) Manager for the VoiceRPG Engine.
- * Provides continuous, seamlessly looping ambient soundtracks per story scene and combat arena.
+ * Background Music (BGM) Manager for the Visual Novel Engine.
+ * Provides continuous, seamlessly looping ambient soundtracks per story scene and title screen.
  * Scene tracks are declared per scene in story data files (musicAsset); the engine ships
- * template tracks (title / exploration / combat) under assets/audio/music/.
+ * template tracks (title / exploration) under assets/audio/music/.
  *
  * Audio Architecture & Routing:
  * - Uses [AudioAttributes.USAGE_MEDIA] and [AudioAttributes.CONTENT_TYPE_MUSIC]
  * - Requests and maintains persistent audio focus with [AudioManager.AUDIOFOCUS_GAIN]
- * - Keeps the media audio pipeline alive so Android Auto / Bluetooth car sinks never sleep
+ * - Keeps the media audio pipeline alive so Bluetooth car sinks and speakers never sleep
  *   or clip initial TTS dialogue syllables.
- * - Supports dynamic speech ducking (drops BGM to ~20% during narration, restoring smoothly).
+ * - Supports dynamic speech ducking (drops BGM smoothly during narration, restoring afterwards).
  */
 class MusicManager(
     private val context: Context? = null,

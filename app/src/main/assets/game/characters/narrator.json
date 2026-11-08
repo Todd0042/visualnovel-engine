@@ -1,5 +1,5 @@
 {
-  "_doc": "TEMPLATE NARRATOR FILE. The narrator is the engine's system voice: it reads scene text, combat flow, menus, and recaps. It never appears as a party member. Replace the portrait/voice to re-skin narration for your game.",
+  "_doc": "TEMPLATE NARRATOR FILE. The narrator is the engine's system voice: it reads scene text, dialogue, and chapter transitions. Replace the portrait/voice to re-skin narration for your visual novel.",
   "id": "narrator",
   "role": "narrator",
   "name": "Narrator",

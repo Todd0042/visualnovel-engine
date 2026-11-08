@@ -46,9 +46,15 @@ class StoryNarrator(
     }
 
     internal fun normalizeTtsText(input: String): String {
-        var text = input
+        var text = input.replace("*", "")
+        text = text.replace(Regex("""\s*\(\d{1,3}\)"""), "")
         GameContent.manifest.ttsReplacements.forEach { (target, replacement) ->
-            text = text.replace(target, replacement, ignoreCase = true)
+            if (target.endsWith(".")) {
+                text = text.replace(target, replacement, ignoreCase = true)
+            } else {
+                val wordRegex = Regex("""\b${Regex.escape(target)}\b""", RegexOption.IGNORE_CASE)
+                text = wordRegex.replace(text, replacement)
+            }
         }
         text = SAINT_ABBREVIATION_REGEX.replace(text) { matchResult ->
             "Saint ${matchResult.groupValues[1]}"
